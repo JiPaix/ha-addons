@@ -1,0 +1,131 @@
+name: "Suwayomi Server (Stable)"
+slug: "suwayomi_stable"
+description: "Suwayomi (Tachidesk) server - Stable channel"
+url: "https://github.com/Suwayomi/Suwayomi-Server-docker"
+version: "stable-00000000-0000-000000000000"
+
+arch:
+  - amd64
+  - aarch64
+  - armv7
+
+image: "ghcr.io/jipaix/ha-addons-suwayomi-stable"
+
+startup: application
+boot: auto
+
+ports:
+  4567/tcp: 4567
+ports_description:
+  4567/tcp: "Suwayomi Web/API"
+
+webui: "http://[HOST]:[PORT:4567]/"
+watchdog: "http://[HOST]:[PORT:4567]/api/v1/settings/about"
+
+map:
+  - type: addon_config
+    read_only: false
+    path: /home/suwayomi/.local/share/Tachidesk
+  - type: addon_config
+    read_only: false
+    path: /tmp/Tachidesk
+
+options:
+  tz: "Europe/Paris"
+  bind_ip: "0.0.0.0"
+  bind_port: 4567
+
+  socks_proxy_enabled: false
+  download_as_cbz: false
+
+  auth_mode: "none"
+  auth_username: ""
+  auth_password: ""
+
+  debug: false
+  max_log_files: 31
+  max_log_file_size: "10mb"
+  max_log_folder_size: "100mb"
+
+  web_ui_enabled: true
+  web_ui_flavor: "WebUI"
+  web_ui_channel: "stable"
+  web_ui_update_interval: 23
+
+  auto_download_chapters: false
+  auto_download_exclude_unread: true
+  auto_download_new_chapters_limit: 0
+  auto_download_ignore_reuploads: false
+
+  max_sources_in_parallel: 6
+
+  update_exclude_unread: true
+  update_exclude_started: true
+  update_exclude_completed: true
+  update_interval: 12
+  update_manga_info: false
+
+  backup_time: "00:00"
+  backup_interval: 1
+  backup_ttl: 14
+
+  flaresolverr_enabled: false
+  flaresolverr_url: "http://localhost:8191"
+  flaresolverr_timeout: 60
+  flaresolverr_response_as_fallback: false
+
+  koreader_sync_strategy_forward: "prompt"
+  koreader_sync_strategy_backward: "disabled"
+
+  database_type: "H2"
+  database_url: "postgresql://localhost:5432/suwayomi"
+
+schema:
+  tz: str
+  bind_ip: str
+  bind_port: port
+
+  socks_proxy_enabled: bool
+  download_as_cbz: bool
+
+  auth_mode: list(none|basic_auth|simple_login|ui_login)
+  auth_username: str?
+  auth_password: password?
+
+  debug: bool
+  max_log_files: int
+  max_log_file_size: str
+  max_log_folder_size: str
+
+  web_ui_enabled: bool
+  web_ui_flavor: list(WebUI|Custom)
+  web_ui_channel: list(bundled|stable|preview)
+  web_ui_update_interval: int
+
+  auto_download_chapters: bool
+  auto_download_exclude_unread: bool
+  auto_download_new_chapters_limit: int
+  auto_download_ignore_reuploads: bool
+
+  max_sources_in_parallel: int
+
+  update_exclude_unread: bool
+  update_exclude_started: bool
+  update_exclude_completed: bool
+  update_interval: float
+  update_manga_info: bool
+
+  backup_time: str
+  backup_interval: int
+  backup_ttl: int
+
+  flaresolverr_enabled: bool
+  flaresolverr_url: str
+  flaresolverr_timeout: int
+  flaresolverr_response_as_fallback: bool
+
+  koreader_sync_strategy_forward: list(prompt|keep_local|keep_remote|disabled)
+  koreader_sync_strategy_backward: list(prompt|keep_local|keep_remote|disabled)
+
+  database_type: list(H2|POSTGRESQL)
+  database_url: str
