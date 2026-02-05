@@ -1,0 +1,273 @@
+configuration:
+  general:
+    name: General
+    description: Core server networking and timezone.
+    fields:
+      tz:
+        name: Time zone
+        description: What time zone the container uses.
+      bind_ip:
+        name: Bind IP
+        description: Interface to listen on inside the container (usually keep default).
+      bind_port:
+        name: Bind port
+        description: Port Suwayomi listens on inside the container.
+
+  socks_proxy:
+    name: SOCKS proxy
+    description: Configure an optional SOCKS5 proxy for outbound connections.
+    fields:
+      enabled:
+        name: Enable SOCKS proxy
+        description: Whether Suwayomi should connect through a SOCKS5 proxy.
+      version:
+        name: SOCKS version
+        description: SOCKS proxy version (typically 5).
+      host:
+        name: Proxy host
+        description: TCP host of the SOCKS proxy.
+      port:
+        name: Proxy port
+        description: TCP port of the SOCKS proxy.
+      username:
+        name: Proxy username
+        description: Username for SOCKS proxy authentication.
+      password:
+        name: Proxy password
+        description: Password for SOCKS proxy authentication.
+
+  auth:
+    name: Authentication
+    description: Configure server authentication and JWT settings.
+    fields:
+      mode:
+        name: Authentication mode
+        description: none, basic_auth, simple_login, or ui_login.
+      username:
+        name: Username
+        description: Login username (if enabled).
+      password:
+        name: Password
+        description: Login password (if enabled).
+      jwt_audience:
+        name: JWT audience
+        description: JWT audience for ui_login tokens.
+      jwt_token_expiry:
+        name: JWT access token expiry
+        description: Access token expiry (duration string, e.g. 5m).
+      jwt_refresh_expiry:
+        name: JWT refresh token expiry
+        description: Refresh token expiry (duration string, e.g. 60d).
+
+  logging:
+    name: Logging
+    description: Configure debug and log retention limits.
+    fields:
+      debug:
+        name: Debug logging
+        description: Enable extra logging for troubleshooting.
+      max_log_files:
+        name: Max log files
+        description: Maximum number of days/files to keep before deleting.
+      max_log_file_size:
+        name: Max log file size
+        description: Maximum size of a single log file (e.g. 10mb).
+      max_log_folder_size:
+        name: Max log folder size
+        description: Maximum combined size of all log files (e.g. 100mb).
+
+  webui:
+    name: Web UI
+    description: Configure the built-in Web UI serving and updates.
+    fields:
+      enabled:
+        name: Enable Web UI
+        description: Whether the server should serve the Web UI.
+      flavor:
+        name: Web UI flavor
+        description: WebUI or Custom.
+      channel:
+        name: Web UI channel
+        description: bundled, stable, or preview.
+      update_interval:
+        name: Web UI update interval (hours)
+        description: 0 disables auto update; otherwise 1–23.
+
+  downloads:
+    name: Downloads
+    description: Configure CBZ, auto-download, conversions, extensions, and concurrency.
+    fields:
+      download_as_cbz:
+        name: Save as CBZ
+        description: Save downloaded manga to disk in CBZ format.
+      auto_download_chapters:
+        name: Auto-download chapters
+        description: Automatically download new chapters when retrieved.
+      auto_download_exclude_unread:
+        name: Exclude unread entries
+        description: Ignore auto-download for entries with unread chapters.
+      auto_download_new_chapters_limit:
+        name: Unread download limit
+        description: 0 disables; max unread downloaded chapters to keep.
+      auto_download_ignore_reuploads:
+        name: Ignore reuploads
+        description: Ignore reuploads during auto-download of new chapters.
+      download_conversions:
+        name: Download conversions (JSON)
+        description: Image download conversions configuration (JSON string).
+      serve_conversions:
+        name: Serve conversions (JSON)
+        description: Image serve conversions configuration (JSON string).
+      extension_repos:
+        name: Extra extension repos (JSON)
+        description: Additional extension repos (JSON array string).
+      max_sources_in_parallel:
+        name: Max sources in parallel
+        description: How many sources can do requests in parallel (1–20).
+
+  updates:
+    name: Library updates
+    description: Configure scheduled update behavior.
+    fields:
+      exclude_unread:
+        name: Exclude unread manga
+        description: Exclude unread manga from updates.
+      exclude_started:
+        name: Exclude not started
+        description: Exclude manga that have not been started.
+      exclude_completed:
+        name: Exclude completed manga
+        description: Exclude completed manga from updates.
+      interval_hours:
+        name: Update interval (hours)
+        description: 0 disables; otherwise hours between global updates.
+      update_manga_info:
+        name: Update manga info
+        description: Update manga info along with chapters.
+
+  backup:
+    name: Backups
+    description: Configure automated backups and included data.
+    fields:
+      time:
+        name: Backup time
+        description: Time of day for automated backup (HH:MM).
+      interval_days:
+        name: Backup interval (days)
+        description: 0 disables; otherwise days between backups.
+      ttl_days:
+        name: Backup retention (days)
+        description: 0 disables; otherwise how long backups are kept.
+      include_manga:
+        name: Include manga
+        description: Include manga in auto-backup.
+      include_categories:
+        name: Include categories
+        description: Include categories in auto-backup.
+      include_chapters:
+        name: Include chapters
+        description: Include chapters in auto-backup.
+      include_tracking:
+        name: Include tracking
+        description: Include tracking in auto-backup.
+      include_history:
+        name: Include history
+        description: Include history in auto-backup.
+      include_client_data:
+        name: Include client data
+        description: Include client data in auto-backup.
+      include_server_settings:
+        name: Include server settings
+        description: Include server settings in auto-backup.
+
+  flaresolverr:
+    name: FlareSolverr
+    description: Configure FlareSolverr integration.
+    fields:
+      enabled:
+        name: Enable FlareSolverr
+        description: Whether FlareSolverr is enabled and available to use.
+      url:
+        name: FlareSolverr URL
+        description: URL of the FlareSolverr instance.
+      timeout_seconds:
+        name: Timeout (seconds)
+        description: Time in seconds for FlareSolverr to timeout.
+      session_name:
+        name: Session name
+        description: Session name Suwayomi will use with FlareSolverr.
+      session_ttl_minutes:
+        name: Session TTL (minutes)
+        description: Time to live for the FlareSolverr session.
+      response_as_fallback:
+        name: Use response as fallback
+        description: Use FlareSolverr response if Suwayomi does not succeed.
+
+  opds:
+    name: OPDS
+    description: Configure OPDS feed behavior.
+    fields:
+      use_binary_file_sizes:
+        name: Binary file sizes
+        description: Display file sizes as KiB/MiB (binary) instead of KB/MB (decimal).
+      items_per_page:
+        name: Items per page
+        description: How many items to show per page (10–4999).
+      enable_page_read_progress:
+        name: Page read progress
+        description: Track and update reading progress by page during streaming.
+      mark_as_read_on_download:
+        name: Mark as read on download
+        description: Automatically mark chapters as read when downloaded.
+      show_only_unread_chapters:
+        name: Show only unread chapters
+        description: Filter feed to chapters you have not read.
+      show_only_downloaded_chapters:
+        name: Show only downloaded chapters
+        description: Filter feed to chapters you have downloaded.
+      chapter_sort_order:
+        name: Chapter sort order
+        description: DESC or ASC.
+      cbz_mime_type:
+        name: CBZ MIME type
+        description: MODERN, LEGACY, or COMPATIBLE.
+
+  koreader:
+    name: KOReader sync
+    description: Configure KOReader sync behavior.
+    fields:
+      sync_checksum_method:
+        name: Checksum method
+        description: binary or filename.
+      sync_percentage_tolerance:
+        name: Percentage tolerance
+        description: Absolute tolerance for progress comparison (0–1).
+      sync_strategy_forward:
+        name: Forward sync strategy
+        description: prompt, keep_local, keep_remote, disabled.
+      sync_strategy_backward:
+        name: Backward sync strategy
+        description: prompt, keep_local, keep_remote, disabled.
+
+  database:
+    name: Database
+    description: Configure database backend (H2 or PostgreSQL).
+    fields:
+      type:
+        name: Database type
+        description: H2 or POSTGRESQL.
+      url:
+        name: Database URL
+        description: Database URL (used for non-H2 database).
+      username:
+        name: Database username
+        description: Database username (used for non-H2 database).
+      password:
+        name: Database password
+        description: Database password (used for non-H2 database).
+      use_hikari_connection_pool:
+        name: Use Hikari pool
+        description: Use Hikari Connection Pool for database connections.
+
+network:
+  4567/TCP: Suwayomi Web/API
