@@ -2,7 +2,7 @@ name: "Suwayomi Server (Preview)"
 slug: "suwayomi_preview"
 description: "Suwayomi (Tachidesk) server - Preview channel"
 url: "https://github.com/Suwayomi/Suwayomi-Server-docker"
-version: "preview-20260205-1158-f80e972d5fe3"
+version: "preview-20260205-1213-f80e972d5fe3"
 
 arch:
   - amd64
