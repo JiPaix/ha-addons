@@ -67,11 +67,16 @@ jobs:
         run: |
           CFG="${{ matrix.addon_dir }}/config.yaml"
           sed -i "s/^version: \".*\"/version: \"$VER\"/" "$CFG"
+
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
+
           git add "$CFG" "${{ matrix.addon_dir }}/UPSTREAM_DIGEST"
-          git commit -m "chore(${{ matrix.addon_dir }}): bump to $VER" || true
-          git push || true
+          git commit -m "chore(${{ matrix.addon_dir }}): bump to $VER" || exit 0
+
+          # Avoid race between matrix jobs
+          git pull --rebase origin main
+          git push origin HEAD:main
 
       - name: Set up QEMU
         if: steps.cmp.outputs.changed == 'true'
