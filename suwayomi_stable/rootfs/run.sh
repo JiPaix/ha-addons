@@ -111,19 +111,8 @@ export DATABASE_USERNAME="$(opt database.username)"
 export DATABASE_PASSWORD="$(opt database.password)"
 export USE_HIKARI_CONNECTION_POOL="$(opt database.use_hikari_connection_pool)"
 
-# Persisted paths:
-# - /config  (addon_config)
-# - /data    (addon data)
-
-# Make sure target parent dirs exist
 mkdir -p /home/suwayomi/.local/share
-mkdir -p /data/TachideskTmp
-
-# If the image expects these exact paths, link them to persisted storage
-rm -rf /home/suwayomi/.local/share/Tachidesk
-ln -s /config /home/suwayomi/.local/share/Tachidesk
-
-rm -rf /tmp/Tachidesk
-ln -s /data/TachideskTmp /tmp/Tachidesk
+ln -sfn /data/Tachidesk /home/suwayomi/.local/share/Tachidesk
+ln -sfn /data/TachideskTmp /tmp/Tachidesk
 
 exec /home/suwayomi/startup_script.sh

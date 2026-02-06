@@ -11,13 +11,12 @@ LABEL \
 
 USER root
 
-# Ensure jq exists to read /data/options.json
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends jq ca-certificates curl \
+  && apt-get install -y --no-install-recommends jq ca-certificates curl gosu \
   && rm -rf /var/lib/apt/lists/*
 
 COPY rootfs/run.sh /run.sh
-RUN chmod a+x /run.sh
+COPY rootfs/entrypoint.sh /entrypoint.sh
+RUN chmod 0755 /run.sh /entrypoint.sh
 
-USER suwayomi
-CMD ["/run.sh"]
+CMD ["/entrypoint.sh"]
