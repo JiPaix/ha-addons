@@ -6,6 +6,10 @@ on:
   schedule:
     - cron: "17 * * * *" # hourly
 
+concurrency:
+  group: suwayomi-main
+  cancel-in-progress: false
+
 permissions:
   contents: write
   packages: write
@@ -13,99 +17,156 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - addon_dir: suwayomi_preview
-            upstream_image: ghcr.io/suwayomi/suwayomi-server:preview
-            upstream_tag: preview
-            ghcr_image: ghcr.io/jipaix/ha-addons-suwayomi-preview
-          - addon_dir: suwayomi_stable
-            upstream_image: ghcr.io/suwayomi/suwayomi-server:stable
-            upstream_tag: stable
-            ghcr_image: ghcr.io/jipaix/ha-addons-suwayomi-stable
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Install crane
         run: |
           curl -sSL https://github.com/google/go-containerregistry/releases/latest/download/go-containerregistry_Linux_x86_64.tar.gz \
             | sudo tar -xz -C /usr/local/bin crane
 
-      - name: Read upstream digest
-        id: upstream
+      - name: Check upstream digests and bump versions if needed
+        id: bump
+        env:
+          PREVIEW_DIR: suwayomi_preview
+          STABLE_DIR: suwayomi_stable
+          PREVIEW_UPSTREAM: ghcr.io/suwayomi/suwayomi-server:preview
+          STABLE_UPSTREAM: ghcr.io/suwayomi/suwayomi-server:stable
         run: |
-          DIGEST="$(crane digest '${{ matrix.upstream_image }}')"
-          echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
-          echo "Upstream digest: $DIGEST"
+          set -euo pipefail
 
-      - name: Detect change
-        id: cmp
-        run: |
-          FILE="${{ matrix.addon_dir }}/UPSTREAM_DIGEST"
-          LAST="$(cat "$FILE" 2>/dev/null || true)"
-          NEW="${{ steps.upstream.outputs.digest }}"
-          if [ -n "$LAST" ] && [ "$LAST" = "$NEW" ]; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          echo "changed=true" >> "$GITHUB_OUTPUT"
-          echo "$NEW" > "$FILE"
+          changed_preview=false
+          changed_stable=false
+          ver_preview=""
+          ver_stable=""
 
-      - name: Compute version
-        if: steps.cmp.outputs.changed == 'true'
-        run: |
-          # version must match the image tag used by HA when 'image:' is set
-          SHORT="$(echo '${{ steps.upstream.outputs.digest }}' | sed 's/.*://')"
-          SHORT="${SHORT:0:12}"
-          VER="${{ matrix.upstream_tag }}-$(date -u +'%Y%m%d-%H%M')-${SHORT}"
-          echo "VER=$VER" >> $GITHUB_ENV
+          bump_one() {
+            local dir="$1"
+            local upstream="$2"
+            local tag="$3"
+            local changed_var="$4"
+            local ver_var="$5"
 
-      - name: Bump add-on version in config.yaml
-        if: steps.cmp.outputs.changed == 'true'
+            local digest file last short ver
+            digest="$(crane digest "$upstream")"
+            file="${dir}/UPSTREAM_DIGEST"
+            last="$(cat "$file" 2>/dev/null || true)"
+
+            if [ -n "$last" ] && [ "$last" = "$digest" ]; then
+              echo "No change for $dir ($digest)"
+              eval "$changed_var=false"
+              eval "$ver_var=''"
+              return 0
+            fi
+
+            echo "Change detected for $dir: $last -> $digest"
+            echo "$digest" > "$file"
+
+            short="${digest#*:}"
+            short="${short:0:12}"
+            ver="${tag}-$(date -u +'%Y%m%d-%H%M')-${short}"
+
+            # bump config.yaml
+            sed -i "s/^version: \".*\"/version: \"${ver}\"/" "${dir}/config.yaml"
+
+            eval "$changed_var=true"
+            eval "$ver_var='${ver}'"
+          }
+
+          bump_one "$PREVIEW_DIR" "$PREVIEW_UPSTREAM" "preview" changed_preview ver_preview
+          bump_one "$STABLE_DIR"  "$STABLE_UPSTREAM"  "stable"  changed_stable  ver_stable
+
+          echo "changed_preview=$changed_preview" >> "$GITHUB_OUTPUT"
+          echo "changed_stable=$changed_stable"   >> "$GITHUB_OUTPUT"
+          echo "ver_preview=$ver_preview"         >> "$GITHUB_OUTPUT"
+          echo "ver_stable=$ver_stable"           >> "$GITHUB_OUTPUT"
+
+      - name: Commit and push bumps (single commit)
+        if: steps.bump.outputs.changed_preview == 'true' || steps.bump.outputs.changed_stable == 'true'
         run: |
-          CFG="${{ matrix.addon_dir }}/config.yaml"
-          sed -i "s/^version: \".*\"/version: \"$VER\"/" "$CFG"
+          set -euo pipefail
 
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
 
-          git add "$CFG" "${{ matrix.addon_dir }}/UPSTREAM_DIGEST"
-          git commit -m "chore(${{ matrix.addon_dir }}): bump to $VER" || exit 0
+          # stage only what may have changed
+          git add suwayomi_preview/config.yaml suwayomi_preview/UPSTREAM_DIGEST \
+                  suwayomi_stable/config.yaml  suwayomi_stable/UPSTREAM_DIGEST || true
 
-          # Avoid race between matrix jobs
-          git pull --rebase origin main
-          git push origin HEAD:main
+          # if nothing staged, do nothing
+          git diff --cached --quiet && exit 0
+
+          msg="chore(suwayomi): bump"
+          if [ "${{ steps.bump.outputs.changed_preview }}" = "true" ]; then
+            msg="$msg preview=${{ steps.bump.outputs.ver_preview }}"
+          fi
+          if [ "${{ steps.bump.outputs.changed_stable }}" = "true" ]; then
+            msg="$msg stable=${{ steps.bump.outputs.ver_stable }}"
+          fi
+
+          git commit -m "$msg"
+
+          # rebase + push with retries (handles any concurrent manual pushes)
+          for i in 1 2 3 4 5; do
+            git fetch origin main
+            git rebase origin/main || { git rebase --abort || true; exit 1; }
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            sleep $((i * 2))
+          done
+
+          exit 1
 
       - name: Set up QEMU
-        if: steps.cmp.outputs.changed == 'true'
+        if: steps.bump.outputs.changed_preview == 'true' || steps.bump.outputs.changed_stable == 'true'
         uses: docker/setup-qemu-action@v3
 
       - name: Set up Buildx
-        if: steps.cmp.outputs.changed == 'true'
+        if: steps.bump.outputs.changed_preview == 'true' || steps.bump.outputs.changed_stable == 'true'
         uses: docker/setup-buildx-action@v3
 
       - name: Login to GHCR
-        if: steps.cmp.outputs.changed == 'true'
+        if: steps.bump.outputs.changed_preview == 'true' || steps.bump.outputs.changed_stable == 'true'
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build & push multi-arch image
-        if: steps.cmp.outputs.changed == 'true'
+      # Preview build
+      - name: Build & push preview (multi-arch)
+        if: steps.bump.outputs.changed_preview == 'true'
         uses: docker/build-push-action@v6
         with:
-          context: ${{ matrix.addon_dir }}
-          file: ${{ matrix.addon_dir }}/Dockerfile
+          context: suwayomi_preview
+          file: suwayomi_preview/Dockerfile
           push: true
           platforms: linux/amd64,linux/arm64
           build-args: |
-            UPSTREAM_TAG=${{ matrix.upstream_tag }}
-            BUILD_VERSION=${{ env.VER }}
+            UPSTREAM_TAG=preview
+            BUILD_VERSION=${{ steps.bump.outputs.ver_preview }}
             BUILD_ARCH=multi
           tags: |
-            ${{ matrix.ghcr_image }}:${{ env.VER }}
-            ${{ matrix.ghcr_image }}:${{ matrix.upstream_tag }}
+            ghcr.io/jipaix/ha-addons-suwayomi-preview:${{ steps.bump.outputs.ver_preview }}
+            ghcr.io/jipaix/ha-addons-suwayomi-preview:preview
+
+      # Stable build
+      - name: Build & push stable (multi-arch)
+        if: steps.bump.outputs.changed_stable == 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: suwayomi_stable
+          file: suwayomi_stable/Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            UPSTREAM_TAG=stable
+            BUILD_VERSION=${{ steps.bump.outputs.ver_stable }}
+            BUILD_ARCH=multi
+          tags: |
+            ghcr.io/jipaix/ha-addons-suwayomi-stable:${{ steps.bump.outputs.ver_stable }}
+            ghcr.io/jipaix/ha-addons-suwayomi-stable:stable
