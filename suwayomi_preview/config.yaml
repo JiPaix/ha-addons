@@ -23,7 +23,6 @@ webui: "http://[HOST]:[PORT:4567]/"
 watchdog: "http://[HOST]:[PORT:4567]/api/v1/settings/about"
 
 map:
-  - addon_config:rw
   - data:rw
 
 options:
