@@ -4,7 +4,7 @@ description: "Suwayomi (Tachidesk) server - Preview channel"
 url: "https://github.com/Suwayomi/Suwayomi-Server-docker"
 logo: logo.png
 
-version: "preview-000000-0000-000000"
+version: "preview-20260206-1751-f80e972d5fe3"
 
 arch:
   - amd64
