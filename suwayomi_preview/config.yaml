@@ -23,12 +23,8 @@ webui: "http://[HOST]:[PORT:4567]/"
 watchdog: "http://[HOST]:[PORT:4567]/api/v1/settings/about"
 
 map:
-  - type: addon_config
-    read_only: false
-    path: /home/suwayomi/.local/share/Tachidesk
-  - type: addon_config
-    read_only: false
-    path: /tmp/Tachidesk
+  - addon_config:rw
+  - data:rw
 
 options:
   general:
