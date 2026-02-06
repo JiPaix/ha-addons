@@ -19,4 +19,4 @@ COPY rootfs/run.sh /run.sh
 COPY rootfs/entrypoint.sh /entrypoint.sh
 RUN chmod 0755 /run.sh /entrypoint.sh
 
-CMD ["/entrypoint.sh"]
+ENTRYPOINT ["/entrypoint.sh"]
