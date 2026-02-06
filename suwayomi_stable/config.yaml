@@ -3,8 +3,9 @@ slug: "suwayomi_stable"
 description: "Suwayomi (Tachidesk) server - Stable channel"
 url: "https://github.com/Suwayomi/Suwayomi-Server-docker"
 logo: logo.png
+icon: logo.png
 
-version: "stable-20260206-1814-acad9ea1cbb9"
+version: "stable-XXXX"
 
 arch:
   - amd64

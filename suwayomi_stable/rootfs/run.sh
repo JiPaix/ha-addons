@@ -3,14 +3,10 @@ set -eu
 
 CONFIG_PATH="/data/options.json"
 
-# Read nested option via dot-path (max depth 2 here)
 opt() {
-  # usage: opt "general.t_oct" is invalid; use "general.tz"
   jq -r --arg p "$1" '
-    def getpathstr($p):
-      ($p | split(".")) as $a
-      | getpath($a);
-    (getpathstr($p) // "")
+    ($p | split(".")) as $a
+    | (getpath($a) // "")
     | if . == null then "" else tostring end
   ' "$CONFIG_PATH" 2>/dev/null || echo ""
 }
@@ -111,8 +107,5 @@ export DATABASE_USERNAME="$(opt database.username)"
 export DATABASE_PASSWORD="$(opt database.password)"
 export USE_HIKARI_CONNECTION_POOL="$(opt database.use_hikari_connection_pool)"
 
-mkdir -p /home/suwayomi/.local/share
-ln -sfn /data/Tachidesk /home/suwayomi/.local/share/Tachidesk
-ln -sfn /data/TachideskTmp /tmp/Tachidesk
-
+# Symlinks are handled in /entrypoint.sh (as root). Just start Suwayomi.
 exec /home/suwayomi/startup_script.sh
