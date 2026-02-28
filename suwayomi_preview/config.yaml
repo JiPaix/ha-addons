@@ -5,7 +5,7 @@ url: "https://github.com/Suwayomi/Suwayomi-Server-docker"
 logo: logo.png
 icon: logo.png
 
-version: "preview-20260221-0248-7d11fd6a54d9"
+version: "preview-20260228-2134-de77d00edd3d"
 
 arch:
   - amd64
